@@ -2,6 +2,37 @@ import streamlit as st
 import requests
 import google.generativeai as genai
 import os
+
+# === Настройки страницы ===
+st.set_page_config(
+    page_title="Bybit TradingView + Gemini AI",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# === Заголовок ===
+st.title("📈 Bybit TradingView + 🤖 Gemini AI Анализ")
+st.markdown("---")
+
+# === Поле ввода символа ===
+symbol = st.text_input("Введите символ (например: BTCUSDT, ETHUSDT)", value="BTCUSDT").strip().upper()
+
+# Проверка корректности символа
+if not symbol or not symbol.replace("USDT", "").replace("USD", "").replace("PERP", "").isalpha():
+    st.warning("Пожалуйста, введите корректный символ (например: BTCUSDT)")
+    st.stop()
+
+# === Отображение TradingView-виджета через iframe ===
+tradingview_url = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_123&symbol=BYBIT:{symbol}.P&interval=60&theme=dark&style=1&locale=ru&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&hide_side_toolbar=true&save_image=true&studies=%5B%22STD%3BCumulative%251Volume%251Delta%22%2C%22STD%3BDEMA%22%2C%22STD%3BOpen%251Interest%22%2C%22STD%3BPivot%251Points%251Standard%22%2C%22STD%3BDivergence%251Indicator%22%5D&hide_volume=false&hide_legend=false&withdateranges=false&hotlist=false&calendar=false&details=false&watchlist=%5B%5D&compareSymbols=%5B%5D&studies_overrides=%7B%7D&overrides=%7B%22paneProperties.backgroundColor%22%3A%22%230F0F0F%22%2C%22paneProperties.gridColor%22%3A%22rgba(242%2C%20242%2C%20242%2C%200.06)%22%7D&timezone=Europe%2FMoscow"
+
+st.components.v1.iframe(
+    src=tradingview_url,
+    width=1200,
+    height=700,
+    scrolling=False
+)
+
+# === Кнопка для AI-анализа ===
 if st.button("🤖 Получить AI-анализ от Gemini"):
     # Проверяем, что symbol существует и не пустой
     if not symbol or not isinstance(symbol, str):
@@ -70,10 +101,6 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             analysis = response.text
             
             st.success("✅ AI-анализ от Gemini:")
-            st.markdown(analysis)
-            
-        except Exception as e:
-            st.error(f"❌ Ошибка: {str(e)}")
             st.markdown(analysis)
             
         except Exception as e:
