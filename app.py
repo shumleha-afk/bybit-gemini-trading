@@ -59,7 +59,7 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             st.write("🔍 Запрос к Bybit API:")
             st.code(f"{url}?{requests.Request('GET', url, params=params, headers=headers).prepare().url}")
             
-            resp = requests.get(# Получаем последние свечи с Bybit
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
 url = "https://api.bybit.com/v5/market/kline"
 params = {
     "category": "linear",
