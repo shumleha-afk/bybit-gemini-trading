@@ -1,3 +1,7 @@
+import streamlit as st
+import requests
+import google.generativeai as genai
+import os
 if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Запрашиваем данные с Bybit и анализируем через Gemini..."):
         try:
