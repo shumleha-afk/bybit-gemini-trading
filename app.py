@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import google.generativeai as genai
+import os
 
 # === Настройки страницы ===
 st.set_page_config(
@@ -16,7 +18,7 @@ st.markdown("---")
 symbol = st.text_input("Введите символ (например: BTCUSDT, ETHUSDT)", value="BTCUSDT").strip().upper()
 
 # Проверка корректности символа
-if not symbol or not symbol.replace("USDT", "").replace("USD", "").isalpha():
+if not symbol or not symbol.replace("USDT", "").replace("USD", "").replace("PERP", "").isalpha():
     st.warning("Пожалуйста, введите корректный символ (например: BTCUSDT)")
     st.stop()
 
@@ -32,7 +34,7 @@ st.components.v1.iframe(
 
 # === Кнопка для AI-анализа ===
 if st.button("🤖 Получить AI-анализ от Gemini"):
-    with st.spinner("Запрашиваем данные с Bybit и анализируем..."):
+    with st.spinner("Запрашиваем данные с Bybit и анализируем через Gemini..."):
         try:
             # Получаем последние свечи с Bybit (публичный API)
             url = "https://api.bybit.com/v5/market/kline"
@@ -51,18 +53,34 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             
             candles = data["result"]["list"]
             prices = [float(c[4]) for c in candles]  # закрытие
-            trend = "восходящий" if prices[-1] > prices[0] else "нисходящий"
             
-            # Формируем анализ (без реального Gemini API для демо)
-            analysis = f"""
-            🔍 **Быстрый технический анализ для {symbol}:**
-            - Последняя цена: **{prices[-1]:.2f} USDT**
-            - Тренд за последние 20 часов: **{trend}**
-            - Изменение: **{((prices[-1] / prices[0]) - 1) * 100:.2f}%**
+            # Формируем строку данных для Gemini
+            data_str = "\n".join([
+                f"Время: {c[0]}, O: {c[1]}, H: {c[2]}, L: {c[3]}, C: {c[4]}"
+                for c in candles[-10:]  # последние 10 свечей для краткости
+            ])
             
-            💡 *Для полного AI-анализа через Gemini API — добавьте ваш API-ключ в код.*
+            # Настройка Gemini API
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                st.error("❌ Не задан GEMINI_API_KEY в Secrets. Добавьте его в Settings → Secrets на Streamlit Cloud.")
+                st.stop()
+                
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-1.5-pro")
+            
+            prompt = f"""
+            Проанализируй последние 10 часовых свечей {symbol} на Bybit.
+            Дай краткий технический анализ: тренд, возможные точки входа, поддержка/сопротивление.
+            Данные (время в Unix ms, O, H, L, C):
+            {data_str}
             """
-            st.success(analysis)
+            
+            response = model.generate_content(prompt)
+            analysis = response.text
+            
+            st.success("✅ AI-анализ от Gemini:")
+            st.markdown(analysis)
             
         except Exception as e:
-            st.error(f"Ошибка: {str(e)}")
+            st.error(f"❌ Ошибка: {str(e)}")
