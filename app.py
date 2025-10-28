@@ -50,41 +50,25 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
                 "limit": 20
             }
             
-            # 🔧 Добавляем User-Agent — имитируем браузер
+            # 🔧 Добавляем полные заголовки — имитируем браузер
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Referer": "https://www.bybit.com/",
+                "Origin": "https://www.bybit.com",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-site",
+                "Connection": "keep-alive"
             }
             
             # 🔍 Отладка: покажем URL запроса
             st.write("🔍 Запрос к Bybit API:")
             st.code(f"{url}?{requests.Request('GET', url, params=params, headers=headers).prepare().url}")
             
-        resp = requests.get(url, params=params, headers=headers, timeout=10)
-url = "https://api.bybit.com/v5/market/kline"
-params = {
-    "category": "linear",
-    "symbol": symbol,
-    "interval": "60",
-    "limit": 20
-}
-
-# 🔧 Добавляем полные заголовки — имитируем браузер
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Referer": "https://www.bybit.com/",
-    "Origin": "https://www.bybit.com",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-site",
-    "Connection": "keep-alive"
-}
-
-try:
-    resp = requests.get(url, params=params, headers=headers, timeout=10)
-    resp.raise_for_status()  # вызовет исключение при 4xx/5xx)
+            resp = requests.get(url, params=params, headers=headers, timeout=10)
             resp.raise_for_status()  # вызовет исключение при 4xx/5xx
             
             # 🔍 Отладка: покажем сырой ответ
