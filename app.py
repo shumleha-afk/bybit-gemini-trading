@@ -3,6 +3,11 @@ import requests
 import google.generativeai as genai
 import os
 if st.button("🤖 Получить AI-анализ от Gemini"):
+    # Проверяем, что symbol существует и не пустой
+    if not symbol or not isinstance(symbol, str):
+        st.error("❌ Символ не задан. Введите, например, BTCUSDT.")
+        st.stop()
+    
     with st.spinner("Запрашиваем данные с Bybit и анализируем через Gemini..."):
         try:
             # Получаем последние свечи с Bybit
@@ -65,6 +70,10 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             analysis = response.text
             
             st.success("✅ AI-анализ от Gemini:")
+            st.markdown(analysis)
+            
+        except Exception as e:
+            st.error(f"❌ Ошибка: {str(e)}")
             st.markdown(analysis)
             
         except Exception as e:
