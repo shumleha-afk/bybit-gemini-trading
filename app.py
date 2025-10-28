@@ -1,38 +1,145 @@
-import streamlit as st
-import requests
-import google.generativeai as genai
-import os
+тлично — теперь мы точно знаем, в чём проблема! 🎯
 
-# === Настройки страницы ===
-st.set_page_config(
-    page_title="Bybit TradingView + Gemini AI",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+❗️Ошибка:
+403 Client Error: Forbidden for url: https://api.bybit.com/v5/market/kline?... 
 
-# === Заголовок ===
-st.title("📈 Bybit TradingView + 🤖 Gemini AI Анализ")
-st.markdown("---")
+Это означает, что Bybit запретил ваш запрос — даже если вы не используете API-ключ (публичный API).
 
-# === Поле ввода символа ===
-symbol = st.text_input("Введите символ (например: BTCUSDT, ETHUSDT)", value="BTCUSDT").strip().upper()
+🔍 Почему так?
+Bybit ограничивает частоту запросов и может блокировать IP, если:
 
-# Проверка корректности символа
-if not symbol or not symbol.replace("USDT", "").replace("USD", "").replace("PERP", "").isalpha():
-    st.warning("Пожалуйста, введите корректный символ (например: BTCUSDT)")
-    st.stop()
+Запросы идут с одного IP слишком часто,
+Используется неправильный User-Agent,
+Запросы идут через прокси или веб-интерфейс (Streamlit),
+Или Bybit просто решил ограничить публичный API для защиты от спама.
+✅ Решение: Добавьте User-Agent в запрос
+Bybit требует, чтобы вы отправляли заголовок User-Agent, как будто вы браузер.
 
-# === Отображение TradingView-виджета через iframe ===
-tradingview_url = f"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_123&symbol=BYBIT:{symbol}.P&interval=60&theme=dark&style=1&locale=ru&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&hide_side_toolbar=true&save_image=true&studies=%5B%22STD%3BCumulative%251Volume%251Delta%22%2C%22STD%3BDEMA%22%2C%22STD%3BOpen%251Interest%22%2C%22STD%3BPivot%251Points%251Standard%22%2C%22STD%3BDivergence%251Indicator%22%5D&hide_volume=false&hide_legend=false&withdateranges=false&hotlist=false&calendar=false&details=false&watchlist=%5B%5D&compareSymbols=%5B%5D&studies_overrides=%7B%7D&overrides=%7B%22paneProperties.backgroundColor%22%3A%22%230F0F0F%22%2C%22paneProperties.gridColor%22%3A%22rgba(242%2C%20242%2C%20242%2C%200.06)%22%7D&timezone=Europe%2FMoscow"
+Шаг 1: Измените код в app.py
+Найдите блок с requests.get(...) и добавьте заголовки:
 
-st.components.v1.iframe(
-    src=tradingview_url,
-    width=1200,
-    height=700,
-    scrolling=False
-)
+pythonпитон
 
-# === Кнопка для AI-анализа ===
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+⌄
+⌄
+⌄
+# Получаем последние свечи с Bybit
+url = "https://api.bybit.com/v5/market/kline"
+params = {
+    "category": "linear",
+    "symbol": symbol,
+    "interval": "60",
+    "limit": 20
+}
+
+# 🔧 Добавляем User-Agent — имитируем браузер
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+try:
+    resp = requests.get(url, params=params, headers=headers, timeout=10)
+    resp.raise_for_status()
+✅ Полный исправленный блок (замените его в app.py)
+Замените весь блок после if st.button("🤖 Получить AI-анализ от Gemini"): на этот:
+
+pythonпитон
+
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
+⌄
 if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Запрашиваем данные с Bybit и анализируем через Gemini..."):
         try:
@@ -45,11 +152,16 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
                 "limit": 20
             }
             
+            # 🔧 Добавляем User-Agent — имитируем браузер
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            
             # 🔍 Отладка: покажем URL запроса
             st.write("🔍 Запрос к Bybit API:")
-            st.code(f"{url}?{requests.Request('GET', url, params=params).prepare().url}")
+            st.code(f"{url}?{requests.Request('GET', url, params=params, headers=headers).prepare().url}")
             
-            resp = requests.get(url, params=params, timeout=10)
+            resp = requests.get(url, params=params, headers=headers, timeout=10)
             resp.raise_for_status()  # вызовет исключение при 4xx/5xx
             
             # 🔍 Отладка: покажем сырой ответ
@@ -95,3 +207,32 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             
         except Exception as e:
             st.error(f"❌ Ошибка: {str(e)}")
+🔄 Шаг 2: Обновите файл на GitHub
+Перейдите в репозиторий bybit-gemini-trading
+Откройте app.py
+Нажмите ✏️ (Edit)
+Вставьте обновлённый код
+Нажмите «Commit changes»
+🚀 Шаг 3: Перезапустите приложение на Streamlit
+На Streamlit Cloud → выберите ваше приложение
+Нажмите «Redeploy»
+Подождите 1–2 минуты
+✅ Проверка
+Теперь:
+
+При нажатии кнопки — должен появиться запрос с User-Agent
+Если Bybit разрешил доступ — вы получите данные и анализ от Gemini
+Если всё равно 403 — значит, Bybit заблокировал IP Streamlit — тогда нужно использовать WebSocket или прокси (сложнее)
+💡 Альтернатива: Использовать WebSocket (для реального времени)
+Если хотите — я могу помочь вам перейти на WebSocket Bybit, который работает без ограничений (но требует больше кода).
+
+Просто скажите:
+👉 «Сделай версию с WebSocket»
+
+Или
+👉 «Я хочу использовать другой источник данных (например, Binance)»
+
+🧑‍💻 Вы почти у цели!
+Вы уже прошли путь от 404 до рабочего AI-приложения — осталось всего несколько шагов.
+
+Если после этого всё равно будет 403 — пришлите скриншот сырого ответа от Bybit — и я помогу найти обходной путь.
