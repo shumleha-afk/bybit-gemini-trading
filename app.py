@@ -36,7 +36,7 @@ st.components.v1.iframe(
 if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Запрашиваем данные с Bybit и анализируем через Gemini..."):
         try:
-            # Получаем последние свечи с Bybit (публичный API)
+            # Получаем последние свечи с Bybit
             url = "https://api.bybit.com/v5/market/kline"
             params = {
                 "category": "linear",
@@ -44,11 +44,22 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
                 "interval": "60",
                 "limit": 20
             }
+            
+            # 🔍 Отладка: покажем URL запроса
+            st.write("🔍 Запрос к Bybit API:")
+            st.code(f"{url}?{requests.Request('GET', url, params=params).prepare().url}")
+            
             resp = requests.get(url, params=params, timeout=10)
+            resp.raise_for_status()  # вызовет исключение при 4xx/5xx
+            
+            # 🔍 Отладка: покажем сырой ответ
+            st.write("📦 Сырой ответ от Bybit:")
+            st.code(resp.text[:500])  # первые 500 символов
+            
             data = resp.json()
             
             if data.get("retCode") != 0:
-                st.error("Ошибка Bybit API: " + data.get("retMsg", "Неизвестно"))
+                st.error(f"❌ Bybit API ошибка: {data.get('retMsg', 'Неизвестно')}")
                 st.stop()
             
             candles = data["result"]["list"]
