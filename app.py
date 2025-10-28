@@ -66,7 +66,8 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             
             # 🔍 Отладка: покажем URL запроса
             st.write("🔍 Запрос к Bybit API:")
-            st.code(f"{url}?{requests.Request('GET', url, params=params, headers=headers).prepare().url}")
+            full_url = requests.Request('GET', url, params=params).prepare().url
+st.code(full_url)
             
             resp = requests.get(url, params=params, headers=headers, timeout=10)
             resp.raise_for_status()  # вызовет исключение при 4xx/5xx
