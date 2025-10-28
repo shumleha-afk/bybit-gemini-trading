@@ -14,7 +14,7 @@ if not symbol or not symbol.replace("USDT", "").replace("USD", "").isalpha():
     st.stop()
 
 # График TradingView (Binance)
-tradingview_url = f"https://s.tradingview.com/widgetembed/?symbol=BINANCE:{symbol}&interval=60"
+tradingview_url = f"https://s.tradingview.com/widgetembed/?symbol=BINANCE:{symbol}&interval=60&theme=dark&style=1&locale=ru&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&hide_side_toolbar=true&save_image=true"
 st.components.v1.iframe(src=tradingview_url, width=1200, height=700, scrolling=False)
 
 if st.button("🤖 Получить AI-анализ от Gemini"):
@@ -52,4 +52,4 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             st.markdown(response.text)
             
         except Exception as e:
-          st.error(f"Ошибка: {str(e)}")
+            st.error(f"Ошибка: {str(e)}")
