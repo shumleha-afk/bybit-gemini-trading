@@ -85,7 +85,18 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Подключаемся к Bybit WebSocket и анализируем..."):
         try:
             # Получаем свечи через WebSocket
-            klines = get_klines_via_websocket(symbol, interval="60", limit=10)
+         full_symbol = f"{symbol}.P"  # Добавляем .P для perpetual
+klines = get_klines_via_websocket(full_symbol, interval="60", limit=10)
+            
+            # === Кнопка анализа ===
+if st.button("🤖 Получить AI-анализ от Gemini"):
+    with st.spinner("Подключаемся к Bybit WebSocket и анализируем..."):
+        try:
+            # Используем полный символ с .P
+            full_symbol = f"{symbol}.P"
+            
+            # Получаем свечи через WebSocket
+            klines = get_klines_via_websocket(full_symbol, interval="60", limit=10)
             
             if not klines:
                 st.error("❌ Не удалось получить данные через WebSocket. Проверьте символ.")
