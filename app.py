@@ -52,4 +52,4 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
             st.markdown(response.text)
             
         except Exception as e:
-            st.error(f"Ошибка: {str
+          st.error(f"Ошибка: {str(e)}")
