@@ -7,23 +7,32 @@ st.set_page_config(page_title="Binance + Gemini AI", layout="wide")
 st.title("📈 Binance TradingView + 🤖 Gemini AI Анализ")
 st.markdown("---")
 
-symbol = st.text_input("Введите символ (например: BTCUSDT)", value="BTCUSDT").strip().upper()
+# === Поле ввода символа ===
+raw_symbol = st.text_input("Введите символ (например: BTCUSDT)", value="BTCUSDT")
+symbol = raw_symbol.strip().upper()
+# Оставляем только буквы и цифры (удаляем всё лишнее)
+symbol = ''.join(filter(str.isalnum, symbol))
 
-if not symbol or not symbol.replace("USDT", "").replace("USD", "").isalpha():
-    st.warning("Введите корректный символ (например: BTCUSDT)")
+if not symbol or not symbol.endswith("USDT"):
+    st.warning("Пожалуйста, введите корректный символ (например: BTCUSDT)")
     st.stop()
 
-# График TradingView (Binance)
+# === График TradingView (Binance) ===
 tradingview_url = f"https://s.tradingview.com/widgetembed/?symbol=BINANCE:{symbol}&interval=60&theme=dark&style=1&locale=ru&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&hide_side_toolbar=true&save_image=true"
 st.components.v1.iframe(src=tradingview_url, width=1200, height=700, scrolling=False)
 
+# === Кнопка анализа ===
 if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Запрашиваем данные с Binance..."):
         try:
             # Запрос к Binance API
             url = "https://api.binance.com/api/v3/klines"
-            params = {"symbol": symbol, "interval": "1h", "limit": 20}
-            resp = requests.get(url, timeout=10)
+            params = {
+                "symbol": symbol,  # Должен быть чистым: BTCUSDT
+                "interval": "1h",
+                "limit": 20
+            }
+            resp = requests.get(url, params=params, timeout=10)
             resp.raise_for_status()
             candles = resp.json()
             
