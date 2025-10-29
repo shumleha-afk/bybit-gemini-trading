@@ -2,53 +2,51 @@ import streamlit as st
 import requests
 import google.generativeai as genai
 import os
+from datetime import datetime
 
-st.set_page_config(page_title="Binance + Gemini AI", layout="wide")
-st.title("📈 Binance TradingView + 🤖 Gemini AI Анализ")
+st.set_page_config(page_title="CoinGecko + Gemini AI", layout="wide")
+st.title("📈 Крипто-график + 🤖 AI-анализ (без блокировок)")
 st.markdown("---")
 
-# === Поле ввода символа ===
-raw_symbol = st.text_input("Введите символ (например: BTCUSDT)", value="BTCUSDT")
-symbol = raw_symbol.strip().upper()
-symbol = ''.join(filter(str.isalnum, symbol))
+# Словарь для перевода названий в ID CoinGecko
+coin_map = {
+    "BTC": "bitcoin",
+    "ETH": "ethereum",
+    "SOL": "solana",
+    "BNB": "binancecoin",
+    "XRP": "ripple",
+    "ADA": "cardano",
+    "DOGE": "dogecoin"
+}
 
-if not symbol or not symbol.endswith("USDT"):
-    st.warning("Пожалуйста, введите корректный символ (например: BTCUSDT)")
-    st.stop()
+coin_name = st.selectbox("Выберите монету", options=list(coin_map.keys()), index=0)
+vs_currency = st.selectbox("Валюта", options=["usd", "eur", "rub"], index=0)
 
-# === График TradingView (Binance) ===
-tradingview_url = f"https://s.tradingview.com/widgetembed/?symbol=BINANCE:{symbol}&interval=60&theme=dark&style=1&locale=ru&toolbar_bg=%23f1f3f6&enable_publishing=false&hide_top_toolbar=false&hide_side_toolbar=true&save_image=true"
+coin_id = coin_map[coin_name]
+
+# График TradingView (спот)
+tradingview_url = f"https://s.tradingview.com/widgetembed/?symbol=COINBASE:{coin_name}USD&interval=60&theme=dark&style=1&locale=ru"
 st.components.v1.iframe(src=tradingview_url, width=1200, height=700, scrolling=False)
 
-# === Кнопка анализа ===
 if st.button("🤖 Получить AI-анализ от Gemini"):
-    with st.spinner("Запрашиваем данные с Binance..."):
+    with st.spinner("Запрашиваем данные с CoinGecko..."):
         try:
-            # Запрос к Binance API с заголовками
-            url = "https://api.binance.com/api/v3/klines"
-            params = {
-                "symbol": symbol,
-                "interval": "1h",
-                "limit": 20
-            }
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "application/json",
-                "Referer": "https://www.binance.com/"
-            }
-            
-            resp = requests.get(url, params=params, headers=headers, timeout=10)
+            # Запрос к CoinGecko
+            url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+            params = {"vs_currency": vs_currency, "days": "7"}  # 7 дней почасово
+            resp = requests.get(url, timeout=10)
             resp.raise_for_status()
-            candles = resp.json()
+            data = resp.json()
             
-            if not candles:
-                st.error("Нет данных от Binance")
+            if "prices" not in data or not data["prices"]:
+                st.error("Нет данных от CoinGecko")
                 st.stop()
             
-            # Формируем данные
+            # Берём последние 24 точки (~24 часа)
+            prices = data["prices"][-24:]
             data_str = "\n".join([
-                f"Время: {c[0]}, O: {c[1]}, H: {c[2]}, L: {c[3]}, C: {c[4]}"
-                for c in candles[-10:]
+                f"Время: {datetime.fromtimestamp(p[0]/1000).strftime('%Y-%m-%d %H:%M')}, Цена: {p[1]:.2f} {vs_currency.upper()}"
+                for p in prices
             ])
             
             # Gemini API
@@ -59,7 +57,7 @@ if st.button("🤖 Получить AI-анализ от Gemini"):
                 
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel("gemini-1.5-pro")
-            prompt = f"Проанализируй последние 10 часовых свечей {symbol} на Binance:\n{data_str}"
+            prompt = f"Проанализируй последние 24 часа цены {coin_name} в {vs_currency.upper()}:\n{data_str}"
             response = model.generate_content(prompt)
             
             st.success("✅ AI-анализ от Gemini:")
