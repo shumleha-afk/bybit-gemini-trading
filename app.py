@@ -10,7 +10,6 @@ st.markdown("---")
 # === Поле ввода символа ===
 raw_symbol = st.text_input("Введите символ (например: BTCUSDT)", value="BTCUSDT")
 symbol = raw_symbol.strip().upper()
-# Оставляем только буквы и цифры (удаляем всё лишнее)
 symbol = ''.join(filter(str.isalnum, symbol))
 
 if not symbol or not symbol.endswith("USDT"):
@@ -25,14 +24,20 @@ st.components.v1.iframe(src=tradingview_url, width=1200, height=700, scrolling=F
 if st.button("🤖 Получить AI-анализ от Gemini"):
     with st.spinner("Запрашиваем данные с Binance..."):
         try:
-            # Запрос к Binance API
+            # Запрос к Binance API с заголовками
             url = "https://api.binance.com/api/v3/klines"
             params = {
-                "symbol": symbol,  # Должен быть чистым: BTCUSDT
+                "symbol": symbol,
                 "interval": "1h",
                 "limit": 20
             }
-            resp = requests.get(url, params=params, timeout=10)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json",
+                "Referer": "https://www.binance.com/"
+            }
+            
+            resp = requests.get(url, params=params, headers=headers, timeout=10)
             resp.raise_for_status()
             candles = resp.json()
             
